@@ -1,18 +1,18 @@
 /*************************************************************************
  * 
- * WEEMO INC CONFIDENTIAL
+ * WEEMO INC.
  * 
- *  Weemo Video Call - v 2.0
- *  [2013] WEEMO INC
+ *  Weemo.js - v 2.0
+ *  [2013] Weemo Inc.
  *  All Rights Reserved.
  * 
  * NOTICE:  All information contained herein is, and remains
- * the property of WEEMO INC.
+ * the property of Weemo Inc..
  * The intellectual and technical concepts contained
- * herein are proprietary to WEEMO INC
+ * herein are proprietary to Weemo Inc.
  * Dissemination of this information or reproduction of this material
  * is strictly forbidden unless prior written permission is obtained
- * from WEEMO INC.
+ * from Weemo Inc.
  */
 
 Weemo = function() {
