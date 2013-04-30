@@ -21,7 +21,7 @@ Weemo = function() {
 	var state = "NOT_CONNECTED";
 	var browser = '';
 	var browserVersion = '';
-	var protocol = "com-on-protocol";
+	var protocol = "weemodriver-protocol";
 	var wsUri = "wss://localhost:34679";
 	var longpollUri = "https://localhost:34679?callback=?";
 	var openedWebSockets = 0;
@@ -98,6 +98,7 @@ Weemo = function() {
 										downloadUrl = 'https://download.weemo.com/poc.php?apikey='+apikey+'&domain_name='+domain;
 									
 								}
+								debug('BROWSER >>>>> WeemoDriver not started');
 								if(typeof(self.onWeemoDriverNotStarted) != undefined && typeof(self.onWeemoDriverNotStarted) == 'function') self.onWeemoDriverNotStarted(downloadUrl); }, downloadTimeoutValue);
 							}
 							createConnection();
@@ -142,9 +143,9 @@ Weemo = function() {
 						
 						case 'sipOk':
 							state = 'CONNECTED';
-							
 							if(displayname != undefined && displayname != '' && displayname != null) sendDisplayname();
-							if(typeof(self.onSipOk) != undefined && typeof(self.onSipOk) == 'function') self.onSipOk();
+							//if(typeof(self.onSipOk) != undefined && typeof(self.onSipOk) == 'function') self.onSipOk();
+							if(typeof(self.onDefaultHandler) != undefined && typeof(self.onDefaultHandler) == 'function') self.onDefaultHandler(action);
 						break;
 						
 						case 'not_connected':
@@ -157,6 +158,8 @@ Weemo = function() {
 						case 'sipNok':
 						case 'onVerifiedUserOk':
 						case 'onConnect': 
+						case 'audioOk':
+						case 'audioNok':
 							if(typeof(self.onDefaultHandler) != undefined && typeof(self.onDefaultHandler) == 'function') self.onDefaultHandler(action);
 						break;
 						
@@ -189,6 +192,11 @@ Weemo = function() {
 						
 						case 'setDisplayname':
 							sendDisplayname();
+						break;
+						
+						case 'audioOk':
+						case 'audioNok':
+							if(typeof(self.onDefaultHandler) != undefined && typeof(self.onDefaultHandler) == 'function') self.onDefaultHandler(action);
 						break;
 						
 						case 'onCallCreated':
@@ -268,7 +276,7 @@ Weemo = function() {
 				default:
 					debug("Error message : General error. Please contact support.");
 			}
-			if(typeof(this.onErrorHandler) != undefined && typeof(this.onErrorHandler) == 'function') this.onErrorHandler(params.message);
+			if(typeof(self.onErrorHandler) != undefined && typeof(self.onErrorHandler) == 'function') self.onErrorHandler(params.message);
 		}
 	};
 	
@@ -278,17 +286,21 @@ Weemo = function() {
 			if(myId == null) myId = uniqid();
 			polling();
 		} else {
+			if(openedWebSockets == 0) {
 			try {
+				
 	    		if(typeof MozWebSocket == 'function') WebSocket = MozWebSocket;
 	    		websock = new WebSocket(wsUri, protocol);
-	    		websock.onopen = function(evt) { openedWebSockets+=1;  debug(openedWebSockets); sm('connected'); debug('WEBSOCKET OPEN'); };
+	    		openedWebSockets+=1;
+	    		websock.onopen = function(evt) { debug('OPENED WEBSOCKETS >>>>> ' + openedWebSockets); sm('connected'); debug('BROWSER >>>>> WEBSOCKET OPEN'); };
 	    		websock.onclose = function(evt) { openedWebSockets-=1; sm('not_connected'); };
 	    		websock.onmessage = function(evt) { handleData(evt.data); };
-	    		websock.onerror = function(evt) { debug('WEBSOCKET ERROR '); sm('not_connected'); };
+	    		websock.onerror = function(evt) { debug('BROWSER >>>>> WEBSOCKET ERROR '); sm('not_connected'); };
 	    	} catch(exception) {
-	    		debug('WEBSOCKET EXCEPTION');
+	    		debug('BROWSER >>>>> WEBSOCKET EXCEPTION');
 	    		debug(exception);
 	    	}
+			}
 		}
 	};
 	var setBrowserInfo = function() {
@@ -334,7 +346,7 @@ Weemo = function() {
 	var controlUser = function() { sendMessage('<verifyuser uid="'+uid+'" apikey="'+apikey+'" token="'+pwd+'" provdomain="'+domain+'"></verifyuser>'); };
 	var controlCall = function(id, item, action) {	 sendMessage('<controlcall id="'+id+'"><'+item+'>'+action+'</'+item+'></controlcall>'); };
 	var sendDisplayname = function(){ sendMessage('<set displayname="'+displayname+'"></set>'); };
-	var getDisplaynameCommand = function(){ sendMessage('<get type="displayname"></get>'); };
+	var getDisplaynameInternal = function(){ sendMessage('<get type="displayname"></get>'); };
 	var createCallInternal = function(uidToCall, type, displaynameToCall) { sendMessage('<createcall uid="'+uidToCall+'" apikey="'+apikey+'" displayname="'+displaynameToCall+'" type="'+type+'"></createcall>'); };
 	var strpos = function(haystack, needle, offset) { var i = (haystack + '').indexOf(needle, (offset || 0)); return i === -1 ? false : i; };
 	var trim = function(str, charlist) {
@@ -374,7 +386,7 @@ Weemo = function() {
 				data: { command:myId+':'+message },
 				dataType: "jsonp",
 				success: function(data) {
-					debug('BROWSER TO WEEMO DRIVER >>>>>> '+message);
+					debug('BROWSER TO WEEMODRIVER >>>>>> '+message);
 					data = trim(data.x);
 					var pos = strpos(data, ":");
 					if(pos !== false) { data = data.substring(pos+1); }
@@ -389,7 +401,7 @@ Weemo = function() {
 		} else {
 			if(websock != undefined && websock != null) {
 				websock.send(message); 
-    			debug('BROWSER TO WEEMO DRIVER >>>>>> '+message);
+    			debug('BROWSER TO WEEMODRIVER >>>>>> '+message);
     		}
 		}
 	};
@@ -397,7 +409,7 @@ Weemo = function() {
 		var action = "";
 	    var params = new Object();
 	    
-		debug('WEEMO DRIVER TO BROWSER >>>>>> ' + data);
+		debug('WEEMODRIVER TO BROWSER >>>>>> ' + data);
 		xmlDoc = jQuery.parseXML(data);
 		$xml = jQuery( xmlDoc );
 		
@@ -424,6 +436,7 @@ Weemo = function() {
 	    $status = $xml.find("status");
 	    $xmpp = $status.find('xmpp');
 	    $sip = $status.find('sip');
+	    $audio = $status.find('audio');
 	    
 	    
 	    // CreatedCall Node 
@@ -469,6 +482,8 @@ Weemo = function() {
 		if($xmpp.length > 0 && $xmpp.text() == "ko") { action = "xmppNok"; }
 	    if($sip.length > 0 && $sip.text() == "ok") { action = "sipOk"; }
 	    if($sip.length > 0 && $sip.text() == "ko") { action = "sipNok"; }
+	    if($audio.length > 0 && $audio.text() == "ko") { action = "audioNok"; }
+	    if($audio.length > 0 && $audio.text() == "ok") { action = "audioOk"; }
 	    
 	    if($disconnectedNode.length > 0 || $disconnectNode.length > 0) { action = "close"; }
 	    
