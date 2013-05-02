@@ -55,11 +55,12 @@ Weemo = function() {
 	this.getUid = function() { return uid; };
 	this.connectToWeemoDriver = function() { sm('connect');  };
 	this.connectToTheCloud = function() { sm('connect');  };
-	this.createCall = function(uidToCall, type, displaynameToCall) { 
+	this.createCall = function(uidToCall, type, displaynameToCall, key) { 
 		var obj = new Object(); 
 		obj.uidToCall = uidToCall; 
 		obj.type = type;
 		obj.displaynameToCall = displaynameToCall;
+		obj.key = key;
 		sm('createCall', obj);
 	};
 
@@ -173,7 +174,7 @@ Weemo = function() {
 					switch(action) {
 						case 'createCall':
 							if(params.uidToCall != undefined && params.type != undefined && params.displaynameToCall != undefined) {
-								createCallInternal(params.uidToCall, params.type, params.displaynameToCall);
+								createCallInternal(params.uidToCall, params.type, params.displaynameToCall, params.key);
 							}
 						break;
 						
@@ -204,7 +205,6 @@ Weemo = function() {
 						break;
 						
 						case 'onCallStatusReceived':
-							debug(params.type + ": " +params.status);
 							if(typeof(self.onCallHandler) != undefined && typeof(self.onCallHandler) == 'function') self.onCallHandler(params.type, params.status);
 						break;
 					}
