@@ -51,7 +51,7 @@ Weemo = function() {
 	this.setPwd = function(value) { pwd = value; };
 	this.setDisplayname = function(value) { displayname = value; sm('setDisplayname'); };
 	this.setEnvironment = function(value) { environment = value; };	
-	this.getDisplayname = function() { return displayname; };
+	this.getDisplayname = function() { sm('getDisplayname'); };
 	this.getUid = function() { return uid; };
 	this.connectToWeemoDriver = function() { sm('connect');  };
 	this.connectToTheCloud = function() { sm('connect');  };
@@ -206,6 +206,17 @@ Weemo = function() {
 						
 						case 'onCallStatusReceived':
 							if(typeof(self.onCallHandler) != undefined && typeof(self.onCallHandler) == 'function') self.onCallHandler(params.type, params.status);
+						break;
+						
+						case 'set':
+							if(params.name == 'displayname') {
+								displayname = params.value;
+							}
+							if(typeof(self.onGetHandler) != undefined && typeof(self.onGetHandler) == 'function') self.onGetHandler(params.name, params.value);
+						break;
+						
+						case 'getDisplayname':
+							getDisplaynameInternal();
 						break;
 					}
 				}
@@ -438,6 +449,10 @@ Weemo = function() {
 	    $sip = $status.find('sip');
 	    $audio = $status.find('audio');
 	    
+	    //Set Node
+	    $set = $xml.find("set");
+	    $displaynameSet = $set.attr('displayname');
+	    $versionSet = $set.attr('version');
 	    
 	    // CreatedCall Node 
 	    $createdcall = $xml.find("createdcall");
@@ -484,6 +499,20 @@ Weemo = function() {
 	    if($disconnectedNode.length > 0 || $disconnectNode.length > 0) { action = "close"; }
 	    
 	    if($closing.length > 0) { action = "closing"; }
+	    
+	    if($set.length > 0) { 
+	    	action = 'set'; 
+	    	
+	    	if($displaynameSet != undefined && $displaynameSet.length > 0) { 
+				 params.name = 'displayname';
+				 params.value = $displaynameSet;
+			}
+	    	
+	    	if($versionSet != undefined && $versionSet.length > 0) { 
+				 params.name = 'version';
+				 params.value = $versionSet;
+			}
+	    }
 	    
 		if($createdcall.length > 0 && $idCreated.length > 0 && $direction == 'out') { 
 			params.createdCallId = $idCreated;
