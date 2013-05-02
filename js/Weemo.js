@@ -7,7 +7,7 @@
  *  All Rights Reserved.
  * 
  * NOTICE:  All information contained herein is, and remains
- * the property of Weemo Inc..
+ * the property of Weemo Inc.
  * The intellectual and technical concepts contained
  * herein are proprietary to Weemo Inc.
  * Dissemination of this information or reproduction of this material
@@ -204,8 +204,8 @@ Weemo = function() {
 						break;
 						
 						case 'onCallStatusReceived':
-							debug(params.status);
-							if(typeof(self.onCallHandler) != undefined && typeof(self.onCallHandler) == 'function') self.onCallHandler(params.status);
+							debug(params.type + ": " +params.status);
+							if(typeof(self.onCallHandler) != undefined && typeof(self.onCallHandler) == 'function') self.onCallHandler(params.type, params.status);
 						break;
 					}
 				}
@@ -347,7 +347,7 @@ Weemo = function() {
 	var controlCall = function(id, item, action) {	 sendMessage('<controlcall id="'+id+'"><'+item+'>'+action+'</'+item+'></controlcall>'); };
 	var sendDisplayname = function(){ sendMessage('<set displayname="'+displayname+'"></set>'); };
 	var getDisplaynameInternal = function(){ sendMessage('<get type="displayname"></get>'); };
-	var createCallInternal = function(uidToCall, type, displaynameToCall) { sendMessage('<createcall uid="'+uidToCall+'" apikey="'+apikey+'" displayname="'+displaynameToCall+'" type="'+type+'"></createcall>'); };
+	var createCallInternal = function(uidToCall, type, displaynameToCall, key) { if(key=='' || key==undefined || key == null) { key = apikey; } sendMessage('<createcall uid="'+uidToCall+'" apikey="'+key+'" displayname="'+displaynameToCall+'" type="'+type+'"></createcall>'); };
 	var strpos = function(haystack, needle, offset) { var i = (haystack + '').indexOf(needle, (offset || 0)); return i === -1 ? false : i; };
 	var trim = function(str, charlist) {
 		i = 0;
@@ -452,8 +452,8 @@ Weemo = function() {
 	    
 	    // statuscall Node
 	    $statuscall = $xml.find("statuscall");
-	    $call = $statuscall.find("call");
 	    $id = $statuscall.attr('id');
+	    $call = $statuscall.find("call");
 	    $video_local = $statuscall.find('video_local');
 	    $video_remote = $statuscall.find('video_remote');
 	    $share_local = $statuscall.find('share_local');
@@ -466,11 +466,7 @@ Weemo = function() {
 	    // Closing Node
 	    $closing = $xml.find("closing");
 	    
-	    if($video_local.length > 0) { $status = $video_local.find("status"); }
-	    if($video_remote.length > 0) { $status = $video_remote.find("status"); }
-	    if($share_local.length > 0) { $status = $share_local.find("status"); }
-	    if($share_remote.length > 0) { $status = $share_remote.find("status"); }
-	    if($sound.length > 0) { $status = $sound.find("status"); }
+	    
 	    if($error.length > 0) { action = "error"; params.message = $error.text();} 
 
 		if($connectedNode.length > 0) { action = "onConnect"; }
@@ -494,9 +490,36 @@ Weemo = function() {
 			action = "onCallCreated";
 		}
 		
-		if($call.length > 0) { 
-			 action = "onCallStatusReceived"; 
-			 params.status = $call.text();
+		if($statuscall.length > 0) {
+			 action = "onCallStatusReceived";
+			if($call.length > 0) { 
+				 params.type = 'call';
+				 params.status = $call.text();
+			}
+			
+			if($video_local.length > 0)  {
+				params.type = 'video_local';
+				params.status = $video_local.text();
+			}
+			
+		    if($video_remote.length > 0) { 
+		    	params.type = 'video_remote';
+				params.status = $video_remote.text();
+			}
+		    
+		    if($share_local.length > 0) { 
+		    	params.type = 'share_local';
+				params.status = $share_local.text();
+		    	
+		    }
+		    if($share_remote.length > 0) { 
+		    	params.type = 'share_remote';
+				params.status = $share_remote.text();
+		    }
+		    if($sound.length > 0) { 
+		    	params.type = 'sound';
+				params.status = $sound.text();
+		    }
 		}
 		
 		if(action != '') sm(action, params);
