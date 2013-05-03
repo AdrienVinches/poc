@@ -228,6 +228,10 @@ Weemo = function() {
 						case 'getDisplayname':
 							getDisplaynameInternal();
 						break;
+						
+						case 'getStatus':
+							getStatusInternal(uidStatus, keyStatus, platformStatus);
+						break;
 					}
 				}
 			break;
@@ -380,6 +384,7 @@ Weemo = function() {
 	var controlCall = function(id, item, action) {	 sendMessage('<controlcall id="'+id+'"><'+item+'>'+action+'</'+item+'></controlcall>'); };
 	var sendDisplayname = function(){ sendMessage('<set displayname="'+displayname+'"></set>'); };
 	var getDisplaynameInternal = function(){ sendMessage('<get type="displayname"></get>'); };
+	var getStatusInternal = function (uidStatus, keyStatus, platformStatus)  { sendMessage('<get type="status" uid="'+uidStatus+'" apikey="'+keyStatus+'" techdomain="'+platformStatus+'"/>')};
 	var createCallInternal = function(uidToCall, type, displaynameToCall, key) { if(key=='' || key==undefined || key == null) { key = apikey; } sendMessage('<createcall uid="'+uidToCall+'" apikey="'+key+'" displayname="'+displaynameToCall+'" type="'+type+'"></createcall>'); };
 	var strpos = function(haystack, needle, offset) { var i = (haystack + '').indexOf(needle, (offset || 0)); return i === -1 ? false : i; };
 	var trim = function(str, charlist) {
