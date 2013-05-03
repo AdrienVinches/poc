@@ -61,6 +61,7 @@ Weemo = function() {
 	this.getUid = function() { return uid; };
 	this.connectToWeemoDriver = function() { sm('connect');  };
 	this.connectToTheCloud = function() { sm('connect');  };
+	this.disconnect = function() { sm('disconnect');  };
 	this.createCall = function(uidToCall, type, displaynameToCall, key) { 
 		var obj = new Object(); 
 		obj.uidToCall = uidToCall; 
@@ -140,10 +141,6 @@ Weemo = function() {
 							controlUser();
 						break;
 						
-						case 'disconnect':
-							disconnect();
-						break;
-						
 						case 'sipOk':
 							state = 'CONNECTED';
 							if(displayname != undefined && displayname != '' && displayname != null) sendDisplayname();
@@ -187,7 +184,7 @@ Weemo = function() {
 						break;
 						
 						case 'disconnect':
-							disconnect();
+							disconnectInternal();
 						break;
 						
 						case 'not_connected':
@@ -378,7 +375,7 @@ Weemo = function() {
 	var connect = function() { if(platform == undefined || platform == null || platform == '') { platform = 'p1.weemo.com'; } sendMessage('<connect techdomain="'+platform+'"></connect>'); };
 	var getVersion = function() { sendMessage('<getversion/>'); };
 	var showWindow = function(winid) { sendMessage('<showwindow window="'+winid+'"></showwindow>'); };
-	var disconnect = function() { sendMessage('<disconnect></disconnect>'); };
+	var disconnectInternal = function() { sendMessage('<disconnect></disconnect>'); };
 	var reset = function() { sendMessage('<reset></reset>'); };
 	var controlUser = function() { sendMessage('<verifyuser uid="'+uid+'" apikey="'+apikey+'" token="'+pwd+'" provdomain="'+domain+'"></verifyuser>'); };
 	var controlCall = function(id, item, action) {	 sendMessage('<controlcall id="'+id+'"><'+item+'>'+action+'</'+item+'></controlcall>'); };
