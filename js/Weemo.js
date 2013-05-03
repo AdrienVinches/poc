@@ -52,6 +52,12 @@ Weemo = function() {
 	this.setDisplayname = function(value) { displayname = value; sm('setDisplayname'); };
 	this.setEnvironment = function(value) { environment = value; };	
 	this.getDisplayname = function() { sm('getDisplayname'); };
+	this.getStatus = function(uidStatus, keyStatus, platformStatus) { 
+		var obj = new Object();
+		obj.uid = uidStatus;
+		obj.key = keyStatus;
+		obj.platform = platformStatus;
+		sm('getStatus', obj); };
 	this.getUid = function() { return uid; };
 	this.connectToWeemoDriver = function() { sm('connect');  };
 	this.connectToTheCloud = function() { sm('connect');  };
@@ -63,10 +69,6 @@ Weemo = function() {
 		obj.key = key;
 		sm('createCall', obj);
 	};
-
-
-
-
 
 	var sm = function(action, params) {
 		debug("STATE >>>>> " + state);
@@ -161,6 +163,8 @@ Weemo = function() {
 						case 'onConnect': 
 						case 'audioOk':
 						case 'audioNok':
+						case 'onConnectionFailed':
+						case 'onReadyforconnection':
 							if(typeof(self.onDefaultHandler) != undefined && typeof(self.onDefaultHandler) == 'function') self.onDefaultHandler(action);
 						break;
 						
@@ -199,6 +203,12 @@ Weemo = function() {
 						case 'audioNok':
 							if(typeof(self.onDefaultHandler) != undefined && typeof(self.onDefaultHandler) == 'function') self.onDefaultHandler(action);
 						break;
+						
+						case 'sipNok':
+						case 'xmppNok':
+							state = 'CONNECTED_WEEMO_DRIVER'; 
+							if(typeof(self.onDefaultHandler) != undefined && typeof(self.onDefaultHandler) == 'function') self.onDefaultHandler(action);
+						break; 
 						
 						case 'onCallCreated':
 							controlCall(params.createdCallId, 'call', 'start');
@@ -261,26 +271,36 @@ Weemo = function() {
 				break;
 					
 				case '19':
-					debug('Error message : Generic error');
+					debug('Error message : Waiting for readyforconnection');
 				break;
 				
 				case '20':
-					debug('Error message : Have to send a poll before');
+					debug('Error message : Generic error');
+					
 				break;
 				
 				case '21':
-					debug('Error message : Internal error');
+					debug('Error message : Have to send a poll before');
+					
 				break;
 					
 				case '22':
-					debug('Error message : Weemo Driver disconnected');
+					debug('Error message : Internal error');
+					
+					
 				break;
 				
 				case '23':
-					debug('Error message : Bad xml or bad command');
+					debug('Error message : Weemo Driver disconnected');
+					
 				break;
 				
 				case '24':
+					debug('Error message : Bad xml or bad command');
+					
+				break;
+				
+				case '25':
 					debug('Error message : Weemo Driver not authenticated');
 				break;
 					
@@ -298,22 +318,24 @@ Weemo = function() {
 			polling();
 		} else {
 			if(openedWebSockets == 0) {
-			try {
-				
-	    		if(typeof MozWebSocket == 'function') WebSocket = MozWebSocket;
-	    		websock = new WebSocket(wsUri, protocol);
-	    		openedWebSockets+=1;
-	    		websock.onopen = function(evt) { debug('OPENED WEBSOCKETS >>>>> ' + openedWebSockets); sm('connected'); debug('BROWSER >>>>> WEBSOCKET OPEN'); };
-	    		websock.onclose = function(evt) { openedWebSockets-=1; sm('not_connected'); };
-	    		websock.onmessage = function(evt) { handleData(evt.data); };
-	    		websock.onerror = function(evt) { debug('BROWSER >>>>> WEBSOCKET ERROR '); sm('not_connected'); };
-	    	} catch(exception) {
-	    		debug('BROWSER >>>>> WEBSOCKET EXCEPTION');
-	    		debug(exception);
-	    	}
+				try {
+					
+		    		if(typeof MozWebSocket == 'function') WebSocket = MozWebSocket;
+		    		websock = new WebSocket(wsUri, protocol);
+		    		debug('BROWSER >>>>> CREATE WEBSOCKET');
+		    		openedWebSockets=openedWebSockets+1;
+		    		websock.onopen = function(evt) { debug('OPENED WEBSOCKETS >>>>> ' + openedWebSockets); sm('connected'); debug('BROWSER >>>>> WEBSOCKET OPEN'); };
+		    		websock.onclose = function(evt) { sm('not_connected'); };
+		    		websock.onmessage = function(evt) { handleData(evt.data); };
+		    		websock.onerror = function(evt) { debug('BROWSER >>>>> WEBSOCKET ERROR '); sm('not_connected'); };
+		    	} catch(exception) {
+		    		debug('BROWSER >>>>> WEBSOCKET EXCEPTION');
+		    		debug(exception);
+		    	}
 			}
 		}
 	};
+	
 	var setBrowserInfo = function() {
 		if (navigator.userAgent.search("MSIE") >= 0){
 		    browser = 'Explorer';
@@ -435,6 +457,9 @@ Weemo = function() {
 	 	
 		// Readyforauthentication Node
 	    $readyforauthenticationNode = $xml.find("readyforauthentication");
+	    
+	    // Readyforconnection Node
+	    $readyforconnectionNode = $xml.find("readyforconnection");
 		
 	 	// verifieduser Node
 	    $verifieduserNode = $xml.find("verifieduser");
@@ -453,6 +478,10 @@ Weemo = function() {
 	    $set = $xml.find("set");
 	    $displaynameSet = $set.attr('displayname');
 	    $versionSet = $set.attr('version');
+	    $statusSet = $set.attr('status');
+	    $uidSet = $set.attr('uid');
+	    $apikeySet = $set.attr('apikey');
+	    $techdomainSet = $set.attr('techdomain');
 	    
 	    // CreatedCall Node 
 	    $createdcall = $xml.find("createdcall");
@@ -484,8 +513,15 @@ Weemo = function() {
 	    
 	    if($error.length > 0) { action = "error"; params.message = $error.text();} 
 
-		if($connectedNode.length > 0) { action = "onConnect"; }
+		if($connectedNode.length > 0) { 
+			if($connectedStatus == 'ok') {
+				action = "onConnect"; 
+			} else {
+				action = "onConnectionFailed";
+			}
+		}
 		if($readyforauthenticationNode.length > 0) { action = "onReadyforauthentication"; }
+		if($readyforconnectionNode.length > 0) { action = "onReadyforconnection"; }
 		if($statusVerified == "ko") { action = "onVerifiedUserNok"; }
 		if($statusVerified == "ok") { action = "onVerifiedUserOk"; }
 		
@@ -511,6 +547,14 @@ Weemo = function() {
 	    	if($versionSet != undefined && $versionSet.length > 0) { 
 				 params.name = 'version';
 				 params.value = $versionSet;
+			}
+	    	
+	    	if($statusSet != undefined && $statusSet.length > 0 && $uidSet != undefined && $uidSet.length > 0 && $techdomainSet != undefined && $techdomainSet.length > 0) { 
+				 params.name = 'status';
+				 params.value = $statusSet;
+				 params.uid = $uidSet;
+				 params.apikey = $apikeySet;
+				 params.platform = $techdomainSet;
 			}
 	    }
 	    
