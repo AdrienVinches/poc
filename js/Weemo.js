@@ -46,22 +46,23 @@ Weemo = function() {
 	this.setUid = function(value) { uid = value; };
 	this.setApikey = function(value) { apikey = value; };
 	this.setMode = function(value) { mode = value; };
-	this.setPlatform = function(value) { platform = value; };
 	this.setDomain = function(value) { domain = value; };
-	this.setPwd = function(value) { pwd = value; };
 	this.setDisplayname = function(value) { displayname = value; sm('setDisplayname'); };
+	
+	this.setPlatform = function(value) { platform = value; };
 	this.setEnvironment = function(value) { environment = value; };	
-	this.getDisplayname = function() { sm('getDisplayname'); };
+	this.getVersion = function() { return version; };
+	this.getDisplayname = function() { return displayname; };
 	this.getStatus = function(uidStatus, keyStatus, platformStatus) { 
 		var obj = new Object();
-		obj.uid = uidStatus;
-		obj.key = keyStatus;
-		obj.platform = platformStatus;
+		obj.uidStatus = uidStatus;
+		obj.keyStatus = keyStatus;
+		obj.platformStatus = platformStatus;
 		sm('getStatus', obj); };
 	this.getUid = function() { return uid; };
+	
 	this.connectToWeemoDriver = function() { sm('connect');  };
 	this.connectToTheCloud = function() { sm('connect');  };
-	this.disconnect = function() { sm('disconnect');  };
 	this.createCall = function(uidToCall, type, displaynameToCall, key) { 
 		var obj = new Object(); 
 		obj.uidToCall = uidToCall; 
@@ -70,14 +71,19 @@ Weemo = function() {
 		obj.key = key;
 		sm('createCall', obj);
 	};
+	
+	//this.disconnect = function() { sm('disconnect');  };
+	this.setPwd = function(value) { pwd = value; };
 
 	var sm = function(action, params) {
 		debug("STATE >>>>> " + state);
 		debug("ACTION >>>>> " + action);
 		switch(state) {
 			case "NOT_CONNECTED":
+			case "RECONNECT":
 				if(action != "") {
 					switch(action) {
+						case 'not_connected':
 						case 'connect':
 							if(downloadTimeout == null) {
 							downloadTimeout = setTimeout(function() { 
@@ -108,15 +114,19 @@ Weemo = function() {
 							createConnection();
 						break;
 						
-						case 'close':
-						case 'not_connected':
-							createConnection();
+						case 'connected':
+							clearTimeout(downloadTimeout);
+							if(typeof(self.onConnectionHandler) != undefined && typeof(self.onConnectionHandler) == 'function') self.onConnectionHandler('connectedWeemoDriver',0);
+							
+							if(state=='RECONNECT') { state='CONNECTED_WEEMO_DRIVER'; sm('connect'); }
+							else {
+								state = 'CONNECTED_WEEMO_DRIVER';
+							}
 						break;
 						
-						case 'connected':
-							state = 'CONNECTED_WEEMO_DRIVER';
-							clearTimeout(downloadTimeout);
-							if(typeof(self.connectedToWeemoDriver) != undefined && typeof(self.connectedToWeemoDriver) == 'function') self.connectedToWeemoDriver();
+						case 'createCall':
+						case 'getStatus':
+							if(typeof(self.onConnectionHandler) != undefined && typeof(self.onConnectionHandler) == 'function') self.onConnectionHandler('initializationIncomplete', 0); // Initialization not completed
 						break;
 					}
 				}
@@ -129,40 +139,53 @@ Weemo = function() {
 							connect();
 						break;
 						
-						case 'close':
-							connect();
+						case 'onConnect': 
+							//if(typeof(self.onConnectionHandler) != undefined && typeof(self.onConnectionHandler) == 'function') self.onConnectionHandler('connectedWeemoDriver',0);
 						break;
 						
-						case 'onVerifiedUserNok':
-							debug('UNABLE TO CONNECT');
+						case 'onConnectionFailed':
+							if(typeof(self.onConnectionHandler) != undefined && typeof(self.onConnectionHandler) == 'function') self.onConnectionHandler('disconnectedWeemoDriver',1);
 						break;
 						
 						case 'onReadyforauthentication':
 							controlUser();
+							if(typeof(self.onConnectionHandler) != undefined && typeof(self.onConnectionHandler) == 'function') self.onConnectionHandler('connectedCloud',0);
+						break;
+						
+						case 'onVerifiedUserOk':
+							if(typeof(self.onConnectionHandler) != undefined && typeof(self.onConnectionHandler) == 'function') self.onConnectionHandler('verifiedUserOk',0);
+						break;
+						
+						case 'audioOk':
+						case 'audioNok':
+						case 'sipNok':
+							if(typeof(self.onConnectionHandler) != undefined && typeof(self.onConnectionHandler) == 'function') self.onConnectionHandler(action,0);
 						break;
 						
 						case 'sipOk':
 							state = 'CONNECTED';
 							if(displayname != undefined && displayname != '' && displayname != null) sendDisplayname();
-							//if(typeof(self.onSipOk) != undefined && typeof(self.onSipOk) == 'function') self.onSipOk();
-							if(typeof(self.onDefaultHandler) != undefined && typeof(self.onDefaultHandler) == 'function') self.onDefaultHandler(action);
+							if(typeof(self.onConnectionHandler) != undefined && typeof(self.onConnectionHandler) == 'function') self.onConnectionHandler(action, 0);
+						break;
+						
+						
+						case 'onVerifiedUserNok':
+							if(typeof(self.onConnectionHandler) != undefined && typeof(self.onConnectionHandler) == 'function') self.onConnectionHandler('verifiedUserNok',0);
 						break;
 						
 						case 'not_connected':
-							state = 'NOT_CONNECTED';
+							state = 'RECONNECT';
+							if(typeof(self.onConnectionHandler) != undefined && typeof(self.onConnectionHandler) == 'function') self.onConnectionHandler('disconnectedWeemoDriver',2);
 							sm('connect');
 						break;
 						
-						case 'xmppNok': 
-						case 'xmppOk':
-						case 'sipNok':
-						case 'onVerifiedUserOk':
-						case 'onConnect': 
-						case 'audioOk':
-						case 'audioNok':
-						case 'onConnectionFailed':
 						case 'onReadyforconnection':
-							if(typeof(self.onDefaultHandler) != undefined && typeof(self.onDefaultHandler) == 'function') self.onDefaultHandler(action);
+							//if(typeof(self.onDefaultHandler) != undefined && typeof(self.onDefaultHandler) == 'function') self.onDefaultHandler(action);
+						break;
+						
+						case 'createCall':
+						case 'getStatus':
+							if(typeof(self.onConnectionHandler) != undefined && typeof(self.onConnectionHandler) == 'function') self.onConnectionHandler('initializationIncomplete', 0); // Initialization not completed
 						break;
 						
 						default:	
@@ -174,22 +197,18 @@ Weemo = function() {
 				if(action != "") {
 					switch(action) {
 						case 'createCall':
-							if(params.uidToCall != undefined && params.type != undefined && params.displaynameToCall != undefined) {
-								createCallInternal(params.uidToCall, params.type, params.displaynameToCall, params.key);
+							if(displayname != "" && displayname != undefined) {
+								if(params.uidToCall != undefined && params.uidToCall != "" && params.type != undefined && params.type != "" && params.displaynameToCall != undefined && params.displaynameToCall != "") {
+									if(params.uidToCall != uid) {
+										createCallInternal(params.uidToCall, params.type, params.displaynameToCall, params.key);
+										state = "CREATE_CALL";
+									} else {
+										if(typeof(self.onCallHandler) != undefined && typeof(self.onCallHandler) == 'function') self.onCallHandler('error', '1'); // Uid to call must be different of your own uid
+									}
+								} 
+							} else {
+								if(typeof(self.onCallHandler) != undefined && typeof(self.onCallHandler) == 'function') self.onCallHandler('error', '2'); // Displayname is empty
 							}
-						break;
-						
-						case 'close':
-							close();
-						break;
-						
-						case 'disconnect':
-							disconnectInternal();
-						break;
-						
-						case 'not_connected':
-							state = 'NOT_CONNECTED';
-							sm('connect');
 						break;
 						
 						case 'setDisplayname':
@@ -198,21 +217,14 @@ Weemo = function() {
 						
 						case 'audioOk':
 						case 'audioNok':
-							if(typeof(self.onDefaultHandler) != undefined && typeof(self.onDefaultHandler) == 'function') self.onDefaultHandler(action);
+							if(typeof(self.onConnectionHandler) != undefined && typeof(self.onConnectionHandler) == 'function') self.onConnectionHandler(action,0);
 						break;
+						
+						
 						
 						case 'sipNok':
-						case 'xmppNok':
 							state = 'CONNECTED_WEEMO_DRIVER'; 
-							if(typeof(self.onDefaultHandler) != undefined && typeof(self.onDefaultHandler) == 'function') self.onDefaultHandler(action);
-						break; 
-						
-						case 'onCallCreated':
-							controlCall(params.createdCallId, 'call', 'start');
-						break;
-						
-						case 'onCallStatusReceived':
-							if(typeof(self.onCallHandler) != undefined && typeof(self.onCallHandler) == 'function') self.onCallHandler(params.type, params.status);
+							if(typeof(self.onConnectionHandler) != undefined && typeof(self.onConnectionHandler) == 'function') self.onConnectionHandler('sipNok', 0);
 						break;
 						
 						case 'set':
@@ -227,7 +239,73 @@ Weemo = function() {
 						break;
 						
 						case 'getStatus':
-							getStatusInternal(uidStatus, keyStatus, platformStatus);
+							getStatusInternal(params.uidStatus, params.keyStatus, params.platformStatus);
+						break;
+						
+						case 'onCallStatusReceived':
+							if(typeof(self.onCallHandler) != undefined && typeof(self.onCallHandler) == 'function') self.onCallHandler(params.type, params.status);
+						break;
+						
+						case 'not_connected':
+							state = 'RECONNECT';
+							sm('connect');
+						break;
+					}
+				}
+			break;
+			
+			case "CREATE_CALL":
+				if(action != "") {
+					switch(action) {
+						case 'onCallCreated':
+							state = 'CONNECTED';
+							if(params.createdCallId == "-1") {
+								if(typeof(self.onCallHandler) != undefined && typeof(self.onCallHandler) == 'function') self.onCallHandler('error', '3'); // Call cannot be created
+							} else {
+								controlCall(params.createdCallId, 'call', 'start');
+							}
+						break;
+						
+						case 'createCall':
+							if(typeof(self.onCallHandler) != undefined && typeof(self.onCallHandler) == 'function') self.onCallHandler('error', '4'); // Call ongoing
+						break;
+						
+						case 'setDisplayname':
+							sendDisplayname();
+						break;
+						
+						case 'audioOk':
+						case 'audioNok':
+							if(typeof(self.onConnectionHandler) != undefined && typeof(self.onConnectionHandler) == 'function') self.onConnectionHandler(action,0);
+						break;
+						
+						case 'sipNok':
+							state = 'CONNECTED_WEEMO_DRIVER'; 
+							if(typeof(self.onConnectionHandler) != undefined && typeof(self.onConnectionHandler) == 'function') self.onConnectionHandler('sipNok', 0);
+						break;
+						
+						case 'set':
+							if(params.name == 'displayname') {
+								displayname = params.value;
+							}
+							if(typeof(self.onGetHandler) != undefined && typeof(self.onGetHandler) == 'function') self.onGetHandler(params.name, params.value);
+						break;
+						
+						case 'getDisplayname':
+							getDisplaynameInternal();
+						break;
+						
+						case 'getStatus':
+							getStatusInternal(params.uidStatus, params.keyStatus, params.platformStatus);
+						break;
+						
+						case 'onCallStatusReceived':
+							if(typeof(self.onCallHandler) != undefined && typeof(self.onCallHandler) == 'function') self.onCallHandler(params.type, params.status);
+						break;
+						
+						case 'not_connected':
+							state = 'RECONNECT';
+							sm('connect');
 						break;
 					}
 				}
@@ -268,32 +346,33 @@ Weemo = function() {
 				break;
 				
 				case '18':
+					state= 'CONNECTED_WEEMO_DRIVER';
+					if(typeof(self.onConnectionHandler) != undefined && typeof(self.onConnectionHandler) == 'function') self.onConnectionHandler('disconnectedCloud',1);
 					debug('Error message : No network or proxy error');
+					sm('connect');
+					
 				break;
 					
 				case '19':
+					state= 'CONNECTED_WEEMO_DRIVER';
+					if(typeof(self.onConnectionHandler) != undefined && typeof(self.onConnectionHandler) == 'function') self.onConnectionHandler('disconnectedCloud',2);
 					debug('Error message : Waiting for readyforconnection');
+					sm('connect');
 				break;
 				
 				case '20':
+					state= 'CONNECTED_WEEMO_DRIVER';
 					debug('Error message : Generic error');
-					
+					sm('connect');
 				break;
 				
 				case '21':
 					debug('Error message : Have to send a poll before');
-					
+					sm('connect');
 				break;
 					
 				case '22':
 					debug('Error message : Internal error');
-					
-					
-				break;
-				
-				case '23':
-					debug('Error message : Weemo Driver disconnected');
-					
 				break;
 				
 				case '24':
@@ -303,12 +382,14 @@ Weemo = function() {
 				
 				case '25':
 					debug('Error message : Weemo Driver not authenticated');
+					state = 'CONNECTED_WEEMO_DRIVER';
+					sm('connect');
 				break;
 					
 				default:
 					debug("Error message : General error. Please contact support.");
 			}
-			if(typeof(self.onErrorHandler) != undefined && typeof(self.onErrorHandler) == 'function') self.onErrorHandler(params.message);
+			//if(typeof(self.onErrorHandler) != undefined && typeof(self.onErrorHandler) == 'function') self.onErrorHandler(params.message);
 		}
 	};
 	
@@ -318,9 +399,9 @@ Weemo = function() {
 			if(myId == null) myId = uniqid();
 			polling();
 		} else {
-			if(openedWebSockets == 0) {
+			debug('BROWSER >>>>> ' + openedWebSockets);
+			if(openedWebSockets <= 0) {
 				try {
-					
 		    		if(typeof MozWebSocket == 'function') WebSocket = MozWebSocket;
 		    		websock = new WebSocket(wsUri, protocol);
 		    		debug('BROWSER >>>>> CREATE WEBSOCKET');
@@ -328,7 +409,7 @@ Weemo = function() {
 		    		websock.onopen = function(evt) { debug('OPENED WEBSOCKETS >>>>> ' + openedWebSockets); sm('connected'); debug('BROWSER >>>>> WEBSOCKET OPEN'); };
 		    		websock.onclose = function(evt) { sm('not_connected'); };
 		    		websock.onmessage = function(evt) { handleData(evt.data); };
-		    		websock.onerror = function(evt) { debug('BROWSER >>>>> WEBSOCKET ERROR '); sm('not_connected'); };
+		    		websock.onerror = function(evt) { openedWebSockets = 0; debug('BROWSER >>>>> WEBSOCKET ERROR '); sm('not_connected'); };
 		    	} catch(exception) {
 		    		debug('BROWSER >>>>> WEBSOCKET EXCEPTION');
 		    		debug(exception);
@@ -375,7 +456,6 @@ Weemo = function() {
 	var connect = function() { if(platform == undefined || platform == null || platform == '') { platform = 'p1.weemo.com'; } sendMessage('<connect techdomain="'+platform+'"></connect>'); };
 	var getVersion = function() { sendMessage('<getversion/>'); };
 	var showWindow = function(winid) { sendMessage('<showwindow window="'+winid+'"></showwindow>'); };
-	var disconnectInternal = function() { sendMessage('<disconnect></disconnect>'); };
 	var reset = function() { sendMessage('<reset></reset>'); };
 	var controlUser = function() { sendMessage('<verifyuser uid="'+uid+'" apikey="'+apikey+'" token="'+pwd+'" provdomain="'+domain+'"></verifyuser>'); };
 	var controlCall = function(id, item, action) {	 sendMessage('<controlcall id="'+id+'"><'+item+'>'+action+'</'+item+'></controlcall>'); };
