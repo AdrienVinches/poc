@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+	    <meta charset="utf-8">
+	    <title>Test 3.2</title>
+	    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	    <meta name="description" content="">
+	    <meta name="author" content="Julien Bunel">
+	    
+	    <!-- CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <style type="text/css">
+      body {
+        padding-top: 20px;
+        padding-bottom: 40px;
+      }
+
+      /* Custom container */
+      .container-narrow {
+        margin: 0 auto;
+        max-width: 700px;
+      }
+      .container-narrow > hr {
+        margin: 30px 0;
+      }
+
+      /* Main marketing message and sign up button */
+      .jumbotron {
+        margin: 60px 0;
+        text-align: center;
+      }
+      .jumbotron h1 {
+        font-size: 72px;
+        line-height: 1;
+      }
+      .jumbotron .btn {
+        font-size: 21px;
+        padding: 14px 24px;
+      }
+
+      /* Supporting marketing content */
+      .marketing {
+        margin: 60px 0;
+      }
+      .marketing p + h4 {
+        margin-top: 28px;
+      }
+    </style>
+    <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
+    
+    
+	    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+	    <!--[if lt IE 9]>
+	      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+	    <![endif]-->
+	    
+	    <!-- Fav and touch icons -->
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../assets/ico/apple-touch-icon-144-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../assets/ico/apple-touch-icon-114-precomposed.png">
+      <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../assets/ico/apple-touch-icon-72-precomposed.png">
+                    <link rel="apple-touch-icon-precomposed" href="../assets/ico/apple-touch-icon-57-precomposed.png">
+                                   <link rel="shortcut icon" href="../assets/ico/favicon.png">
+	</head>
+	<body>
+		<div class="container-narrow">
+			<div class="masthead">
+		        <ul class="nav nav-pills pull-right">
+		          <li class="active"><a href="#">Test page</a></li>
+		          <li><a href="/contact.php">Contact</a></li>
+		        </ul>
+		        <h3 class="muted">Weemo.js 2.0</h3>
+		      </div>
+		
+		      <hr/>
+		
+			<div class="row">
+				<div class="span6">
+				    <form>
+					    <fieldset>
+						    <legend>User information</legend>
+						   	<div>
+						   		<label for="uid">UID</label>
+								<input type="text" placeholder="UID" name="uid" id="uid"/>
+							</div>
+							<div>
+								<label for="apikey">APIKEY</label>
+								<input type="text" placeholder="APIKEY" name="apikey" id="apikey" value="6u6pkbjib8yctvp07xkj" />
+							</div>
+							<div>
+								<label for="displayname">DISPLAYNAME</label>
+								<input type="text" placeholder="DISPLAYNAME" name="displayname" id="displayname" value="" />
+							</div>
+							
+							<div>
+								<label for="platform">Platform</label>
+								<select name="platform" id="platform">
+									<option value="dev.weemo.com">dev.weemo.com</option>
+									<option value="qualif.weemo.com">qualif.weemo.com</option>
+									<option value="p3.weemo.com">p3.weemo.com</option>
+									<option value="p1.weemo.com">p1.weemo.com</option>
+								</select>
+							</div>
+						    
+						    <button type="button" class="btn disabled" id="connect">Connect</button>
+						    <button type="button" class="btn disabled" id="setdisplayname">Set Displayname</button>
+						    
+<!-- 						    <button type="button" class="btn" id="disconnect">Disconnect</button> -->
+					    </fieldset>
+				    </form>
+				</div>
+			</div>
+			
+			<div class="row">
+				<div class="span6">
+				    <form>
+					    <fieldset>
+						    <legend>One to One call</legend>
+						   	<div>
+								<label for="uidToCall">UID TO CALL</label>
+								<input type="text" placeholder="UID TO CALL" name="uidToCall" id="uidToCall"/>
+							</div>
+							<div>
+								<label for="displaynameToCall">DISPLAYNAME TO CALL</label>
+								<input type="text" placeholder="DISPLAYNAME TO CALL" name="displaynameToCall" id="displaynameToCall"/>
+							</div>
+						    <button type="button" class="btn disabled" id="call">Call</button>
+					    </fieldset>
+				    </form>
+				</div>
+			</div>
+			
+			<div class="row">
+				<div class="span6">
+				    <form>
+					    <fieldset>
+						    <legend>Connect as host</legend>
+						    <br />
+						    <label for="title">Cloud</label>
+						    <select id="cmhost" name="cmhost">
+						    	<option value="">-- Choose --</option>
+						    	<option value="nyc1">New-York</option>
+						    	<option value="par1">Paris</option>
+						    </select>
+						    <br />
+						   	<button type="button" class="btn disabled" id="host">Host</button>
+					    </fieldset>
+				    </form>
+				</div>
+			</div>
+			
+			<div class="row">
+				<div class="span6">
+				    <form>
+					    <fieldset>
+						    <legend>Connect as invitee</legend>
+						    <div>
+								<label for="adminUid">Admin uid</label>
+								<input type="text" placeholder="ADMIN UID" name="adminUid" id="adminUid"/>
+								
+								<label for="title">Call window title</label>
+								<input type="text" placeholder="Call window title" name="title" id="title"/>
+								
+								<br />
+								<label for="title">Cloud</label>
+							    <select id="cmattendee" name="cmattendee">
+							    	<option value="">-- Choose --</option>
+							    	<option value="nyc1">New-York</option>
+							    	<option value="par1">Paris</option>
+							    </select>
+								<br />
+							</div>
+						   	<button type="button" class="btn disabled" id="attendee">Invitee</button>
+					    </fieldset>
+				    </form>
+				</div>
+			</div>
+			
+			<div class="row">
+				<div class="span6">
+				    <form>
+					    <fieldset>
+						    <legend>Get Status</legend>
+						   	<div>
+						   		<label for="uidStatus">UID</label>
+								<input type="text" placeholder="UID" name="uidStatus" id="uidStatus"/>
+							</div>
+							<div>
+								<label for="keyStatus">APIKEY</label>
+								<input type="text" placeholder="APIKEY" name="keyStatus" id="keyStatus" value="6u6pkbjib8yctvp07xkj" />
+							</div>
+						    <button type="button" class="btn disabled" id="getstatus">Get status</button>
+					    </fieldset>
+				    </form>
+				</div>
+			</div>
+		
+		    <div id="myModal" class="modal hide fade">
+			    <div class="modal-header">
+			    	<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+			    	<h3>Weemo Driver Download</h3>
+			    </div>
+			     <div class="modal-body">
+			    	<p>WeemoDriver does not respond, to download the last version of WeemoDriver, please follow this link:</p>
+			    	<p style="text-align: center;" id="downloadUrl"></p>
+			    </div>
+			    <div class="modal-footer">
+			    	<a href="#" class="btn" data-dismiss="modal" >Close</a>
+			    </div>
+			</div>
+			
+			<div id="informatinModal" class="modal hide fade">
+			    <div class="modal-header">
+			    	<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+			    	<h3>Warning !</h3>
+			    </div>
+			     <div class="modal-body">
+			    	<p class="information"></p>
+			    </div>
+			    <div class="modal-footer">
+			    	<a href="#" class="btn" data-dismiss="modal" >Close</a>
+			    </div>
+			</div>
+		
+		 <div class="footer">
+	        <p>&copy; Weemo 2013</p>
+	      </div>
+	    </div><!--/row-->
+	    <!-- Le javascript
+	    ================================================== -->
+	    <!-- Placed at the end of the document so the pages load faster -->
+	    <script src="js/jquery-1.9.1.min.js"></script>
+	    <script src="js/bootstrap.min.js"></script>
+	    <script src="https://static-dev.weemo.com/2.0/js/Weemo.js"></script>
+	    <script>
+	    	var weemo = new Weemo();
+	    	weemo.setMode('debug');
+	    	weemo.setApikey($('#apikey').val());
+	    	weemo.connectToWeemoDriver();
+
+	    	weemo.onWeemoDriverNotStarted = function(downloadUrl) {
+		    	$('#downloadUrl').html('<a href="'+downloadUrl+'">Click to download</a>');
+		    	$('#myModal').modal('show');
+	    	};
+
+	    	weemo.onConnectionHandler = function(message, code) {
+	    		if(window.console) console.log("Connection Handler : " + message + ' ' + code);
+
+	    		switch(message) {
+	    			case 'connectedWeemoDriver':
+	    				$('#connect').removeClass('disabled').click(function() {
+	    		    		var uid = $('#uid').val();
+	        		    	var key = $('#apikey').val();
+	        		    	var domain = 'weemo-poc.com';
+	        		    	var platform = $('#platform :selected').val();
+	        		    	if(uid != undefined && uid != "" && domain != undefined && domain != "" && platform != undefined && platform != "" && key != undefined && key != "") {
+	        		    		weemo.setUid(uid);
+	        			    	weemo.setApikey(key);
+	        			    	weemo.setDomain(domain);
+	        			    	weemo.setPlatform(platform);
+
+	        			    	if($('#displayname').val() != '') weemo.setDisplayname($('#displayname').val());
+	        			    	weemo.connectToTheCloud();
+	        		    	}
+	    		    	});
+		    		break;
+
+	    			case 'disconnectedWeemoDriver':
+	    				$('#connect').addClass('disabled').unbind('click');
+		    		break;
+
+	    			case 'connectedCloud':
+	    			case 'verifiedUserOk':
+	    			case 'audioOk':
+					case 'audioNok':
+					case 'sipNok':
+	    				//$('#connect').addClass('disabled').unbind('click');
+		    		break;
+
+					case 'sipOk':
+	    				$('#host, #call,#attendee,#getstatus').removeClass('disabled').unbind('click');
+
+	    				$('#getstatus').click(function() {
+	    		    		var uidStatus = $('#uidStatus').val();
+	    		    		var keyStatus = $('#keyStatus').val();
+	    					
+	    			    	weemo.getStatus(uidStatus, keyStatus, $('#platform :selected').val());
+	    		    	});
+
+	    				$('#call').click(function() {
+	    		    		var uidToCall = $('#uidToCall').val();
+	    		    		var displaynameToCall=$('#displaynameToCall').val();
+	    		    		var type='internal';
+	    		    		weemo.createCall(uidToCall, type, displaynameToCall);
+	    		    	});
+
+	    				$('#host').click(function() {
+	    		    		var uidToCall = weemo.getUid();
+	    		    		var cm = $('#cmhost :selected').val();
+	    			    	//var displaynameToCall = weemo.getDisplayname();
+	    			    	var displaynameToCall = $('#displayname').val();
+	    			    	var type = 'host';
+	    			    	weemo.createCall(cm+uidToCall, type, displaynameToCall);
+	    		    	});
+
+	    		    	$('#attendee').click(function() {
+	    			    	var uidToCall = $('#adminUid').val();
+	    			    	var cm = $('#cmattendee :selected').val();
+	    			    	var displaynameToCall = $('#title').val();
+	    			    	var type = 'attendee';
+	    			    	weemo.createCall(cm+uidToCall, type, displaynameToCall);
+	    		    	});
+		    		break;
+	    		}
+	    	};
+
+	    	weemo.onErrorHandler = function(idMessage) {
+	    		if(window.console) console.log("Error Handler : " + idMessage);
+
+	    		switch(idMessage) {
+	    			case '26':
+	    				$('p.information').html('Please set your displayname before');
+	    				$('#informatinModal').modal('show');
+		    		break;
+
+	    			case '27':
+	    				$('p.information').html('Initialization not completed');
+	    				$('#informatinModal').modal('show');
+		    		break;
+
+	    			case '28':
+	    				$('p.information').html('Uid to call must be different of your own uid');
+	    				$('#informatinModal').modal('show');
+		    		break;
+	    		}
+	    	};
+
+	    	weemo.onCallHandler = function(type, status) {
+	    		if(window.console) console.log("Call Handler : " + type + ": " + status);
+	    	};
+
+	    	/*weemo.onDefaultHandler = function(status) {
+	    		if(window.console) console.log("Status Handler : " + status);
+	    	};*/
+
+	    	weemo.onGetHandler = function(name, value) {
+	    		if(window.console) console.log("Get Handler : " + name + ': ' + value);
+	    	};
+	    	
+	    	
+	    	$(function() {
+		    	$('#setdisplayname').click(function() {
+		    		weemo.setDisplayname($('#displayname').val());
+		    	});
+	    	
+		    	$('#disconnect').click(function() {
+		    		weemo.disconnect();
+		    	});	
+	    	});
+	    </script>
+	</body>
+</html>
