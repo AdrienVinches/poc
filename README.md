@@ -3,7 +3,7 @@ We are excited about your interest to integrate Weemo Cloud video functionality 
 Optionally, third parties can submit their proof of concept integrations directly on github.
 
 ##Introduction
-The wiki @ https://github.com/weemo/poc/wiki presents a basic and functional methodology for integrating the Weemo video driver and cloud technologies in a web application as a proof-of-concept.
+The wiki @ https://github.com/weemo/POC-WeemoDriver-3.2 presents a basic and functional methodology for integrating the Weemo video driver and cloud technologies in a web application as a proof-of-concept.
 
 The use cases have been minimized in order to reduce the integration effort while creating a functional model for the POC that covers most of the use cases for audio/video and screen sharing during 1:1 calls and multi-party calls.
 
