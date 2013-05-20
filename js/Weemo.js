@@ -75,9 +75,15 @@ Weemo = function() {
 	//this.disconnect = function() { sm('disconnect');  };
 	this.setPwd = function(value) { pwd = value; };
 
-	var sm = function(action, params) {
-		debug("STATE >>>>> " + state);
-		debug("ACTION >>>>> " + action);
+	var sm = function(action, params, data) {
+		
+		if(data != undefined && data != '') {
+			deb = 'WEEMODRIVER TO BROWSER >>>>> ' + data + ' | STATE = ' + state + ' | ACTION = ' + action;
+		} else {
+			deb = 'STATE = ' + state + ' | ACTION = ' + action;
+		}
+		debug(deb);
+		
 		switch(state) {
 			case "NOT_CONNECTED":
 			case "RECONNECT":
@@ -85,8 +91,18 @@ Weemo = function() {
 					switch(action) {
 						case 'not_connected':
 						case 'connect':
+							if(state == 'RECONNECT' && websock != null && websock != undefined) { 
+								debug('BROWSER WEBSOCKET READYSTATE : ' + websock.readyState); 
+								
+								/*websock.onopen = null;
+								websock.onopen = null;
+								websock.onopen = null;
+								websock.onopen = null;*/
+								
+							}
+							
 							if(downloadTimeout == null) {
-							downloadTimeout = setTimeout(function() { 
+								downloadTimeout = setTimeout(function() { 
 								switch(environment) {
 									case 'production':
 										downloadUrl = 'https://download.weemo.com/poc.php?apikey='+apikey+'&domain_name='+domain;
@@ -116,12 +132,11 @@ Weemo = function() {
 						
 						case 'connected':
 							clearTimeout(downloadTimeout);
-							if(typeof(self.onConnectionHandler) != undefined && typeof(self.onConnectionHandler) == 'function') self.onConnectionHandler('connectedWeemoDriver',0);
 							
 							if(state=='RECONNECT') { state='CONNECTED_WEEMO_DRIVER'; sm('connect'); }
-							else {
-								state = 'CONNECTED_WEEMO_DRIVER';
-							}
+							else { state = 'CONNECTED_WEEMO_DRIVER'; }
+
+							if(typeof(self.onConnectionHandler) != undefined && typeof(self.onConnectionHandler) == 'function') self.onConnectionHandler('connectedWeemoDriver',0);
 						break;
 						
 						case 'createCall':
@@ -135,6 +150,7 @@ Weemo = function() {
 			case "CONNECTED_WEEMO_DRIVER":
 				if(action != "") {
 					switch(action) {
+					case 'onReadyforconnection':
 						case 'connect':
 							connect();
 						break;
@@ -179,10 +195,6 @@ Weemo = function() {
 							sm('connect');
 						break;
 						
-						case 'onReadyforconnection':
-							//if(typeof(self.onDefaultHandler) != undefined && typeof(self.onDefaultHandler) == 'function') self.onDefaultHandler(action);
-						break;
-						
 						case 'createCall':
 						case 'getStatus':
 							if(typeof(self.onConnectionHandler) != undefined && typeof(self.onConnectionHandler) == 'function') self.onConnectionHandler('initializationIncomplete', 0); // Initialization not completed
@@ -199,13 +211,15 @@ Weemo = function() {
 						case 'createCall':
 							if(displayname != "" && displayname != undefined) {
 								if(params.uidToCall != undefined && params.uidToCall != "" && params.type != undefined && params.type != "" && params.displaynameToCall != undefined && params.displaynameToCall != "") {
-									if(params.uidToCall != uid) {
+									if(params.uidToCall == uid && (params.type == 'internal' || params.type == 'external')) {
+										if(typeof(self.onCallHandler) != undefined && typeof(self.onCallHandler) == 'function') self.onCallHandler('error', '1'); // Uid to call must be different of your own uid
+									} else {
 										createCallInternal(params.uidToCall, params.type, params.displaynameToCall, params.key);
 										state = "CREATE_CALL";
-									} else {
-										if(typeof(self.onCallHandler) != undefined && typeof(self.onCallHandler) == 'function') self.onCallHandler('error', '1'); // Uid to call must be different of your own uid
 									}
-								} 
+								} else {
+									debug('uidToCall, type and displaynameToCall must be set');
+								}
 							} else {
 								if(typeof(self.onCallHandler) != undefined && typeof(self.onCallHandler) == 'function') self.onCallHandler('error', '2'); // Displayname is empty
 							}
@@ -399,17 +413,17 @@ Weemo = function() {
 			if(myId == null) myId = uniqid();
 			polling();
 		} else {
-			debug('BROWSER >>>>> ' + openedWebSockets);
+			//debug('BROWSER >>>>> ' + openedWebSockets);
 			if(openedWebSockets <= 0) {
 				try {
 		    		if(typeof MozWebSocket == 'function') WebSocket = MozWebSocket;
 		    		websock = new WebSocket(wsUri, protocol);
-		    		debug('BROWSER >>>>> CREATE WEBSOCKET');
+		    		//debug('BROWSER >>>>> CREATE WEBSOCKET');
 		    		openedWebSockets=openedWebSockets+1;
 		    		websock.onopen = function(evt) { debug('OPENED WEBSOCKETS >>>>> ' + openedWebSockets); sm('connected'); debug('BROWSER >>>>> WEBSOCKET OPEN'); };
-		    		websock.onclose = function(evt) { sm('not_connected'); };
+		    		websock.onclose = function(evt) { openedWebSockets = 0; debug('BROWSER >>>>> WEBSOCKET CLOSE'); sm('not_connected'); };
 		    		websock.onmessage = function(evt) { handleData(evt.data); };
-		    		websock.onerror = function(evt) { openedWebSockets = 0; debug('BROWSER >>>>> WEBSOCKET ERROR '); sm('not_connected'); };
+		    		websock.onerror = function(evt) {  debug('BROWSER >>>>> WEBSOCKET ERROR'); };
 		    	} catch(exception) {
 		    		debug('BROWSER >>>>> WEBSOCKET EXCEPTION');
 		    		debug(exception);
@@ -462,7 +476,14 @@ Weemo = function() {
 	var sendDisplayname = function(){ sendMessage('<set displayname="'+displayname+'"></set>'); };
 	var getDisplaynameInternal = function(){ sendMessage('<get type="displayname"></get>'); };
 	var getStatusInternal = function (uidStatus, keyStatus, platformStatus)  { sendMessage('<get type="status" uid="'+uidStatus+'" apikey="'+keyStatus+'" techdomain="'+platformStatus+'"/>')};
-	var createCallInternal = function(uidToCall, type, displaynameToCall, key) { if(key=='' || key==undefined || key == null) { key = apikey; } sendMessage('<createcall uid="'+uidToCall+'" apikey="'+key+'" displayname="'+displaynameToCall+'" type="'+type+'"></createcall>'); };
+	var createCallInternal = function(uidToCall, type, displaynameToCall, key) { 
+		if(key=='' || key==undefined || key == null) { key = apikey; } 
+		if(type == 'host' || type == 'attendee') {
+			var mvs = uidToCall.substr(0,4);
+			if(mvs != 'nyc1' && mvs != 'par1') { uidToCall = 'nyc1'+uidToCall; }
+		}
+		sendMessage('<createcall uid="'+uidToCall+'" apikey="'+key+'" displayname="'+displaynameToCall+'" type="'+type+'"></createcall>'); 
+	};
 	var strpos = function(haystack, needle, offset) { var i = (haystack + '').indexOf(needle, (offset || 0)); return i === -1 ? false : i; };
 	var trim = function(str, charlist) {
 		i = 0;
@@ -524,7 +545,6 @@ Weemo = function() {
 		var action = "";
 	    var params = new Object();
 	    
-		debug('WEEMODRIVER TO BROWSER >>>>>> ' + data);
 		xmlDoc = jQuery.parseXML(data);
 		$xml = jQuery( xmlDoc );
 		
@@ -677,7 +697,7 @@ Weemo = function() {
 		    }
 		}
 		
-		if(action != '') sm(action, params);
+		if(action != '') sm(action, params, data);
 	};
 	
 	var polling = function() {
