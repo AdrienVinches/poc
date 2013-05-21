@@ -90,12 +90,15 @@
               };
            </script>
            <script>
+           
+           // WeemoDriver Initilization
               var weemo = new Weemo();
               weemo.setMode('debug');
               weemo.setEnvironment('weemo-poc.com');
               weemo.setApikey('your api key here');
               weemo.connectToWeemoDriver();
- 
+              
+            // Callback handle and show the pop with the good download URL
               weemo.onWeemoDriverNotStarted = function(downloadUrl) {
                     modal = new Modal('WeemoDriver download', 'Click <a href="'+downloadUrl+'">here</a> to download.');
                     modal.show();
