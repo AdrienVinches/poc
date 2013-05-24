@@ -16,7 +16,7 @@ var Modal = function(title, html) {
 	    	};
 
 	    	var defaultStyles = function() {
-	    	var pageHeight = $(document).height();
+	    	var pageHeight = $(window).height();
 	    	var pageWidth = $(window).width();
 
 	    	if(self.options.top == "center") {
