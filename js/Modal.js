@@ -154,4 +154,13 @@ var weemo_box = function() {
         $('.weemo_modal_close, .btnClose').parent().fadeOut().remove();
         $('.weemo_overlay').fadeOut().remove();
     };
+    
+     $(".btnDownload").click(function(){
+        this.close();
+        $("body").prepend('<div id="bandeau">'+
+            '<p>1. Wait a few seconds for the Weemo Driver download to complete</p>'+
+            '<p>2. Open the Weemo Driver Installer and follow the simple installation steps</p>'+
+        '</div>');
+        $("#bandeau").slideDown(750);
+    });
 };
